@@ -67,6 +67,10 @@ python -m build
 
 The wheel and source archive are written to `dist/`.
 
+## Author
+
+   Developed by [Davide Camino](https://github.com/DavideCamino).
+
 ## License
 
 GNU GPL version 3; see [LICENSE](LICENSE).
