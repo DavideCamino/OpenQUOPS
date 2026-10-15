@@ -108,10 +108,6 @@ work from their reported execution time.
   supplied `bqm` and `num_reads` arguments. Sampling is heuristic and does not
   guarantee a global optimum.
 
-The reported time includes conversion and sampling, but not aggregation or
-DataFrame formatting. The result label is currently fixed to
-`"simulated annealing"`, even when a different sampler is supplied.
-
 ## QAOA
 
 **File:** `src/oquops/solvers/variational/qaoa_qiskit_aer.py`  

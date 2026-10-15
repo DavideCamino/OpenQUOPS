@@ -15,7 +15,7 @@ class AnnealOcean(Solver):
         """Initialize the annealing solver."""
         super().__init__()
 
-    def write_solution(self, sampleset: SampleSet, time: float) -> SolverResult:
+    def write_solution(self, sampleset: SampleSet, time: float, sampler_name: str) -> SolverResult:
         """Aggregate samples into a result without energy columns.
 
         Args:
@@ -47,5 +47,5 @@ class AnnealOcean(Solver):
 
         stop = time.time()
 
-        result = self.write_solution(sampleset, stop-start)
+        result = self.write_solution(sampleset, stop-start, str(type(sampler)))
         return result
