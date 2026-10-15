@@ -9,12 +9,19 @@ from dimod import Sampler
 import time
 
 class AnnealOcean(Solver):
-    """Find all global optima using qubovert's exhaustive solver."""
+    """Sample quadratic problems with an Ocean-compatible annealing sampler."""
 
     def __init__(self):
+        """Initialize the annealing solver."""
         super().__init__()
 
     def write_solution(self, sampleset: SampleSet, time: float) -> SolverResult:
+        """Aggregate samples into a result without energy columns.
+
+        Args:
+            sampleset: Ocean samples and occurrence counts.
+            time: Solver runtime in seconds.
+        """
         sampleset = sampleset.aggregate()
         dataframe = sampleset.to_pandas_dataframe()
         dataframe = dataframe.drop('energy', axis=1)
@@ -22,6 +29,13 @@ class AnnealOcean(Solver):
         return result
 
     def solve(self, problem: QuadraticProblem, num_samples: int = 1024, sampler: Sampler = SimulatedAnnealingSampler()) -> SolverResult:
+        """Sample a quadratic model and return assignments and counts.
+
+        Args:
+            problem: Binary or spin model to sample.
+            num_samples: Number of sampler reads.
+            sampler: Ocean sampler; defaults to simulated annealing.
+        """
         start = time.time()
 
         if problem.problem_type == ProblemType.QUBO:

@@ -7,6 +7,8 @@ from ..result import SolverResult
 
 
 class Solver(ABC):
+    """Define the common interface for quadratic problem solvers."""
+
     @abstractmethod
     def solve(self, problem: QuadraticProblem) -> SolverResult:
-        """Solve or sample a quadratic problem."""
+        """Return solutions for problem, the quadratic model to solve or sample."""

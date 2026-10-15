@@ -1,22 +1,16 @@
-from .exception import ProblemValidationError
-
 import qubovert
 from enum import Enum
 import numpy as np
 
 
 class ProblemType(str, Enum):
+    """Identify binary (QUBO) or spin (QUSO) problem variables."""
+
     QUBO = "qubo"
     QUSO = "quso"
 
 class QuadraticProblem:
-    """
-        Class that: 
-            - store a quadratic problem
-            - allows to define or load a problem
-            - save a problem to file
-            - convert from QUBO to QUSO and viceversa
-    """
+    """Store and evaluate a quadratic problem and convert its representation."""
 
     matrix: np.ndarray
     symbols: tuple[str, ...]
@@ -31,12 +25,21 @@ class QuadraticProblem:
             offset: float = 0
         ) -> None:
 
+        """Initialize a problem.
+
+        Args:
+            matrix: Upper-triangular coefficients; diagonal entries are linear terms.
+            symbols: Variable names in matrix order.
+            problem_type: Binary (QUBO) or spin (QUSO) representation.
+            offset: Constant energy term.
+        """
         self.matrix = matrix
         self.symbols = symbols
         self.problem_type = problem_type
         self.offset = offset
 
     def evaluate(self, assignement: np.ndarray) -> float:
+        """Return energy for assignement, the variable values in matrix order."""
         energy = self.offset
         for i in range(len(self.matrix)):
             energy += self.matrix[i][i] * assignement[i]
@@ -45,6 +48,7 @@ class QuadraticProblem:
         return energy
 
     def to_qubovert_quso(self) -> qubovert.QUSO:
+        """Return an equivalent qubovert spin model, including the offset."""
         if self.problem_type == ProblemType.QUSO:
             p_qubovert = qubovert.QUSO()
         else:
@@ -62,6 +66,7 @@ class QuadraticProblem:
             return qubovert.utils.qubo_to_quso(p_qubovert)
 
     def to_qubovert_qubo(self) -> qubovert.QUBO:
+        """Return an equivalent qubovert binary model, including the offset."""
         if self.problem_type == ProblemType.QUBO:
             p_qubovert = qubovert.QUBO()
         else:
@@ -79,6 +84,7 @@ class QuadraticProblem:
             return qubovert.utils.quso_to_qubo(p_qubovert)
 
     def to_quso(self) -> QuadraticProblem:
+        """Return an equivalent spin problem with the same variable names."""
         p_qubovert = self.to_qubovert_quso().to_quso()
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
 
@@ -91,6 +97,7 @@ class QuadraticProblem:
         return QuadraticProblem(matrix, self.symbols, ProblemType.QUSO, offset)
 
     def to_qubo(self) -> QuadraticProblem:
+            """Return an equivalent binary problem with the same variable names."""
             p_qubovert = self.to_qubovert_qubo().to_qubo()
             matrix = np.zeros((len(self.symbols), len(self.symbols)))
     

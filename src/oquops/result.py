@@ -4,26 +4,8 @@ import pandas as pd
 import numpy as np
 from typing import Any
 
-"""
-TO DO:
-
-- input validation
-
-"""
-
 class SolverResult:
-    """
-        Class that: 
-            - store the solution of a quadratic problem. The solution is:
-                - dataframe: one column for each variable one column for the num_occurrences
-                  one row for each assignement sampled in the last cell the times
-                  that the assignement is observed;
-                - execution_time
-                - solver name
-                - metadata: solver specific information, saved as dictionary.
-            - save the solution on a file
-            - retun one or all assignement as np.ndarray
-    """
+    """Store sampled assignments, execution time, solver name, and metadata."""
 
     problem_type: ProblemType
     dataframe: pd.DataFrame
@@ -38,6 +20,14 @@ class SolverResult:
             solver: str,
             metadata: dict[str, Any] | None = None
             ) -> None:
+        """Initialize a solver result.
+
+        Args:
+            dataframe: Assignments with variable columns and num_occurrences.
+            execution_time: Solver runtime in seconds.
+            solver: Solver name.
+            metadata: Optional solver-specific details; defaults to an empty dict.
+        """
         self.dataframe = dataframe
         self.execution_time = execution_time
         self.solver = solver
