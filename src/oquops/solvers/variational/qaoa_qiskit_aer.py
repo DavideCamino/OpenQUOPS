@@ -260,7 +260,7 @@ class Qiskit_Aer_QAOA(Solver):
                 assignement = self.to_spin(key, len(problem.matrix))
             data.append(assignement + [value])
 
-        cols = problem.symbols + ['num_occurrences']
+        cols = list(problem.symbols) + ['num_occurrences']
         dataframe = pd.DataFrame(data, columns=cols)
         return dataframe
 

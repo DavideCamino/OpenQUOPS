@@ -58,6 +58,11 @@ from oquops.solvers.annealing.annealing_ocean import AnnealOcean
 from oquops.solvers.variational.qaoa_qiskit_aer import Qiskit_Aer_QAOA
 ```
 
+## Implementation
+
+See [implementation.md](implementation.md) for the component structure,
+implementation decisions, and planned improvements.
+
 ## Build distributions
 
 ```bash

@@ -167,3 +167,34 @@ requires a best optimization result. Also, `to_dataframe()` currently combines
 symbol type and needs a tuple/list normalization before QAOA result formatting
 can work with that type. Runtime primitives are version-sensitive, which is why
 the installation configuration constrains the supported Runtime minor version.
+
+## TO DO
+
+### Planned extensions
+
+- [ ] **Configurable QAOA optimizers:** Allow callers to select the parameter
+  optimizer instead of hardcoding COBYLA. Define a common optimizer interface
+  in `src/oquops/optimizer/base.py` and provide implementations in
+  `src/oquops/optimizer/`, starting with a SciPy adapter. Expose optimizer
+  options such as tolerance, iteration limits, and initial parameters.
+- [ ] **Problem persistence:** Add load/save methods using a documented,
+  versioned format (for example, JSON), preserving coefficients, symbol order,
+  problem type, and offset. Validate loaded data through the same input checks.
+- [ ] **Import from qubovert:** Add factory methods for qubovert QUBO and QUSO
+  models, preserving labels, variable ordering, and offsets. Explicitly handle
+  unsupported labels or higher-order terms rather than silently losing data.
+
+### Ideas on future extension not planned already
+
+- [ ] **Problem input validation:** Check that the matrix is square and numeric,
+  coefficients and offset are finite, symbols are unique and match its size,
+  and the problem type is supported. Define a clear policy for nonzero
+  lower-triangular entries rather than silently ignoring them. Validate
+  assignment lengths and binary/spin domains in `evaluate()`.
+- [ ] **Validate solver options:** Require positive layer, restart, shot, and
+  sample counts. Reject invalid options early and handle empty sampling results
+  or optimization runs that fail or return non-finite objective values.
+- [ ] **Useful QAOA metadata:** Store optimized parameters, convergence status,
+  objective value, evaluation count, seeds, layer count, and shot settings.
+  Distinguish the offset-free estimator objective from the original problem
+  energy when reporting costs.
