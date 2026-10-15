@@ -22,10 +22,9 @@ qubovert, Ocean, or Qiskit rather than reimplementing those backends.
   `offset + sum(matrix[i,i] * x[i]) + sum(matrix[i,j] * x[i] * x[j], i < j)`.
   That is, with coefficient matrix $M$, constant offset $c$ and assignement $\mathbf{x}$:
 
-  $$
-  E(\mathbf{x}) = c + \sum_{i=0}^{n-1} M_{ii} x_i
-  + \sum_{i=0}^{n-1} \sum_{j=i+1}^{n-1} M_{ij} x_i x_j.
-  $$
+$$
+E(\mathbf{x}) = c + \sum_{i=0}^{n-1} M_{ii} x_i + \sum_{i=0}^{n-1} \sum_{j=i+1}^{n-1} M_{ij} x_i x_j.
+$$
 
   Entries below the diagonal are ignored, so interactions are counted once.
 - **Implementation decision:** Conversion is delegated to qubovert.
@@ -54,9 +53,9 @@ names, or assignment values; callers must provide consistent data.
 
   The correspondence between a binary value $x_i$ and a spin $s_i$ is:
 
-  $$
-  s_i = 1 - 2x_i, \qquad x_i = \frac{1 - s_i}{2}.
-  $$
+$$
+s_i = 1 - 2x_i, \qquad x_i = \frac{1 - s_i}{2}.
+$$
 
   Thus, binary **0** corresponds to spin **+1**, and binary **1** corresponds
   to spin **−1**. Converting the objective coefficients and offset consistently
