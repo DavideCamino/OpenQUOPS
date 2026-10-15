@@ -108,7 +108,7 @@ class Qiskit_Aer_QAOA(Solver):
         backend: Any,
         candidate_circuit: Any,
         cost_hamiltonian: SparsePauliOp,
-        cost_func_estimator: Callable[[Sequence[float] | np.ndarray, Any, SparsePauliOp, Estimator], float],
+        cost_func_estimator: Callable,
         shots: int,
         num_restarts: int = 10,
         seed: int | None = None,
