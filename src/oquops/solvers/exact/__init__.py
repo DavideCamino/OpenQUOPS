@@ -1,0 +1,1 @@
+"""Exhaustive quadratic optimization solvers."""

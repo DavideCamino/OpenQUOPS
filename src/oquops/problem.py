@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import qubovert
 from enum import Enum
 import numpy as np

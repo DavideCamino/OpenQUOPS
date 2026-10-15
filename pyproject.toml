@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "OpenQUOPS"
+version = "0.1.0"
+description = "Quadratic optimization with exhaustive search, annealing, and QAOA."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "qubovert>=1.2.5",
+]
+
+[project.optional-dependencies]
+annealing = [
+    "dimod>=0.12",
+    "dwave-samplers>=1.2",
+]
+qaoa = [
+    "scipy>=1.10",
+    "qiskit>=2,<3",
+    "qiskit-aer>=0.17,<0.18",
+    "qiskit-ibm-runtime>=0.50,<0.51",
+]
+all = [
+    "dimod>=0.12",
+    "dwave-samplers>=1.2",
+    "scipy>=1.10",
+    "qiskit>=2,<3",
+    "qiskit-aer>=0.17,<0.18",
+    "qiskit-ibm-runtime>=0.50,<0.51",
+]
+dev = ["build>=1.2", "pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["oquops*"]
+namespaces = false
