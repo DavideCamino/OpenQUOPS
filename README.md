@@ -1,6 +1,6 @@
 # OpenQUOPS
 
-A Python library for quadratic optimization in QUBO (binary) and QUSO (spin)
+OpenQUOPS (Open Quadratic Unconstrained Problem Solver) is a Python library for quadratic optimization in QUBO (binary) and QUSO (spin)
 form, with exhaustive search, Ocean annealing, and Qiskit Aer QAOA solvers.
 
 ## Installation
