@@ -25,7 +25,7 @@ class AnnealOcean(Solver):
         sampleset = sampleset.aggregate()
         dataframe = sampleset.to_pandas_dataframe()
         dataframe = dataframe.drop('energy', axis=1)
-        result = SolverResult(dataframe=dataframe, execution_time=time, solver='simulated annealing')
+        result = SolverResult(dataframe=dataframe, execution_time=time, solver='Annealing', metadata={'sampler': sampler_name})
         return result
 
     def solve(self, problem: QuadraticProblem, num_samples: int = 1024, sampler: Sampler = SimulatedAnnealingSampler()) -> SolverResult:
