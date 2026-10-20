@@ -14,29 +14,29 @@ authors = [
        { name = "Davide Camino" },
 ]
 dependencies = [
-    "numpy>=1.23",
-    "pandas>=1.5",
-    "qubovert>=1.2.5",
+    "numpy==2.5.4",
+    "pandas==3.0.6",
+    "qubovert==1.2.5",
 ]
 
 [project.optional-dependencies]
 annealing = [
-    "dimod>=0.12",
-    "dwave-samplers>=1.2",
+    "dimod==0.12.22",
+    "dwave-samplers==1.8.0",
 ]
 qaoa = [
-    "scipy>=1.10",
-    "qiskit>=2,<3",
-    "qiskit-aer>=0.17,<0.18",
-    "qiskit-ibm-runtime>=0.50,<0.51",
+    "scipy==1.18.1",
+    "qiskit==2.5.2",
+    "qiskit-aer==0.17.2",
+    "qiskit-ibm-runtime==0.50.0",
 ]
 all = [
-    "dimod>=0.12",
-    "dwave-samplers>=1.2",
-    "scipy>=1.10",
-    "qiskit>=2,<3",
-    "qiskit-aer>=0.17,<0.18",
-    "qiskit-ibm-runtime>=0.50,<0.51",
+    "dimod==0.12.22",
+    "dwave-samplers==1.8.0",
+    "scipy==1.18.1",
+    "qiskit==2.5.2",
+    "qiskit-aer==0.17.2",
+    "qiskit-ibm-runtime==0.50.0",
 ]
 dev = ["build>=1.2", "pytest>=8"]
 
