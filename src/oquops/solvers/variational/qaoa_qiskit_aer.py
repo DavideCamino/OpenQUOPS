@@ -14,9 +14,8 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 import qiskit_aer
 
-from qiskit_ibm_runtime import Session
-from qiskit_ibm_runtime.executor_estimator import Estimator
-from qiskit_ibm_runtime.executor_sampler import Sampler
+from qiskit_aer.primitives import EstimatorV2 as Estimator
+from qiskit_aer.primitives import SamplerV2 as Sampler
 
 import time
 import pandas as pd
@@ -95,38 +94,39 @@ class Qiskit_Aer_QAOA(Solver):
 
     def optimization(
         self,
-        backend: Any,
         init_params: Sequence[float] | np.ndarray,
         candidate_circuit: Any,
         cost_hamiltonian: SparsePauliOp,
-        cost_func_estimator: Callable[[Sequence[float] | np.ndarray, Any, SparsePauliOp, Estimator], float],
-        shots: int,
+        cost_func_estimator: Callable[
+            [Sequence[float] | np.ndarray, Any, SparsePauliOp, Estimator],
+            float,
+        ],
         seed: int | None = None,
     ) -> OptimizeResult:
-        """Run one COBYLA optimization in an estimator session.
+        """Optimize using Aer expectation values.
 
-        Args:
-            backend: Execution backend.
-            init_params: Starting circuit parameter values.
-            candidate_circuit: Transpiled QAOA circuit.
-            cost_hamiltonian: Objective operator.
-            cost_func_estimator: Callback evaluating parameters, circuit, operator, and estimator.
-            shots: Shots per expectation estimate.
-            seed: Optional simulator random seed.
+        backend and shots are retained for compatibility with existing callers.
+        With precision=0.0, estimator shots are not used.
         """
-        with Session(backend=backend) as session:
-            estimator = Estimator(mode=session)
-            estimator.options.default_shots = shots
-            estimator.options.simulator.seed_simulator = seed
+        estimator = Estimator(
+            options={
+                "default_precision": 0.0,
+                "backend_options": {
+                    "method": "statevector",
+                },
+                "run_options": {
+                    "seed_simulator": seed,
+                },
+            }
+        )
 
-            result = minimize(
-                cost_func_estimator,
-                init_params,
-                args=(candidate_circuit, cost_hamiltonian, estimator),
-                method="COBYLA",
-                tol=1e-5
-            )
-            return result
+        return minimize(
+            cost_func_estimator,
+            init_params,
+            args=(candidate_circuit, cost_hamiltonian, estimator),
+            method="COBYLA",
+            tol=1e-5,
+        )
 
     def generate_initial_params(
         self,
@@ -147,11 +147,9 @@ class Qiskit_Aer_QAOA(Solver):
 
     def repeated_optimization(
         self,
-        backend: Any,
         candidate_circuit: Any,
         cost_hamiltonian: SparsePauliOp,
         cost_func_estimator: Callable,
-        shots: int,
         num_restarts: int = 10,
         seed: int | None = None,
     ) -> OptimizeResult:
@@ -175,12 +173,10 @@ class Qiskit_Aer_QAOA(Solver):
             optimization_seed = None if seed is None else int(rng.integers(0, np.iinfo(np.int32).max))
 
             result = self.optimization(
-                backend,
                 init_params,
                 candidate_circuit,
                 cost_hamiltonian,
                 cost_func_estimator,
-                shots=shots,
                 seed=optimization_seed,
             )
 
@@ -191,29 +187,26 @@ class Qiskit_Aer_QAOA(Solver):
 
     def sample(
         self,
-        backend: Any,
         optimized_circuit: Any,
         shots: int,
         seed: int | None = None,
     ) -> dict[int, int]:
-        """Sample a bound circuit and return integer outcome counts.
+        """Sample the measured circuit using Aer.
 
-        Args:
-            backend: Execution backend.
-            optimized_circuit: Parameter-bound circuit with measurements.
-            shots: Number of measurement shots.
-            seed: Optional simulator random seed.
+        backend is retained for compatibility with existing callers.
         """
-        sampler = Sampler(mode=backend)
-        sampler.options.default_shots = shots
-        sampler.options.simulator.seed_simulator = seed
+        sampler = Sampler(
+            default_shots=shots,
+            seed=seed,
+            options={
+                "backend_options": {
+                    "method": "statevector",
+                },
+            },
+        )
 
-
-        pub = (optimized_circuit,)
-        job = sampler.run([pub], shots=shots)
-        counts_int = job.result()[0].data.meas.get_int_counts()
-
-        return counts_int
+        job = sampler.run([(optimized_circuit,)], shots=shots)
+        return job.result()[0].data.meas.get_int_counts()
 
     def to_spin(self, integer: int, num_bits: int) -> list[int]:
         """Decode an outcome into spins, least-significant qubit first.
@@ -276,7 +269,14 @@ class Qiskit_Aer_QAOA(Solver):
         result = SolverResult(dataframe=dataframe, execution_time=time, solver='qaoa')
         return result
 
-    def solve(self, problem: QuadraticProblem, level: int = 2, seed: int | None = None, sample_shots: int = 4096, estimator_shot: int = 2048, num_restart: int = 10) -> SolverResult:
+    def solve(
+            self,
+            problem: QuadraticProblem, 
+            level: int = 2, 
+            seed: int | None = None, 
+            sample_shots: int = 4096, 
+            num_restart: int = 10
+            ) -> SolverResult:
         """Optimize a QAOA circuit and sample candidate assignments.
 
         Args:
@@ -295,10 +295,20 @@ class Qiskit_Aer_QAOA(Solver):
         hamiltonian = self.build_cost_hamiltonian(quso_problem)
         circuit = self.build_circuit(hamiltonian, reps=level)
         transpiled_circuit = self.transpile(backend, circuit, seed=seed)
-        best_params = self.repeated_optimization(backend, transpiled_circuit, hamiltonian, self.cost_func_estimator, estimator_shot, seed=seed, num_restarts=num_restart)
+        best_params = self.repeated_optimization(
+            transpiled_circuit,
+            hamiltonian,
+            self.cost_func_estimator,
+            seed=seed,
+            num_restarts=num_restart,
+        )
         optimized_circuit = transpiled_circuit.assign_parameters(best_params.x)
         optimized_circuit.measure_all()
-        counts = self.sample(backend, optimized_circuit, seed=seed, shots=sample_shots)
+        counts = self.sample(
+            optimized_circuit,
+            seed=seed,
+            shots=sample_shots,
+        )
 
         stop = time.time()
 
