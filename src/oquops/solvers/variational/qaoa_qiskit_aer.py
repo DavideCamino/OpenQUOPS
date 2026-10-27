@@ -78,7 +78,7 @@ class Qiskit_Aer_QAOA(Solver):
             params: Circuit parameter values.
             ansatz: Transpiled circuit with its qubit layout.
             hamiltonian: Cost operator on virtual qubits.
-            estimator: Primitive used to estimate expectation values.
+            estimator: Aer EstimatorV2 primitive used to estimate expectation values.
         """
         # transform the observable defined on virtual qubits to
         # an observable defined on all physical qubits
@@ -103,10 +103,17 @@ class Qiskit_Aer_QAOA(Solver):
         ],
         seed: int | None = None,
     ) -> OptimizeResult:
-        """Optimize using Aer expectation values.
+        """Optimize using exact statevector expectations from Aer EstimatorV2.
 
-        backend and shots are retained for compatibility with existing callers.
-        With precision=0.0, estimator shots are not used.
+        Args:
+            init_params: Initial circuit parameter values.
+            candidate_circuit: Transpiled QAOA circuit.
+            cost_hamiltonian: Objective operator on virtual qubits.
+            cost_func_estimator: Callback evaluating parameters, circuit, operator, and estimator.
+            seed: Optional simulator random seed.
+
+        The estimator uses default_precision=0.0, so no sampling noise is added
+        to the expectation values and no estimator shot count is needed.
         """
         estimator = Estimator(
             options={
@@ -157,11 +164,9 @@ class Qiskit_Aer_QAOA(Solver):
         """Optimize random starts and return the lowest-cost result.
 
         Args:
-            backend: Execution backend.
             candidate_circuit: Transpiled QAOA circuit.
             cost_hamiltonian: Objective operator.
             cost_func_estimator: Callback evaluating parameters, circuit, operator, and estimator.
-            shots: Shots per expectation estimate.
             num_restarts: Number of independent optimization runs.
             seed: Optional seed for initial parameters and simulator seeds.
         """
@@ -191,9 +196,15 @@ class Qiskit_Aer_QAOA(Solver):
         shots: int,
         seed: int | None = None,
     ) -> dict[int, int]:
-        """Sample the measured circuit using Aer.
+        """Sample the measured circuit using Aer SamplerV2.
 
-        backend is retained for compatibility with existing callers.
+        Args:
+            optimized_circuit: Parameter-bound circuit with a meas register.
+            shots: Number of measurement shots.
+            seed: Optional sampler random seed.
+
+        Returns:
+            Integer measurement outcomes mapped to occurrence counts.
         """
         sampler = Sampler(
             default_shots=shots,
@@ -284,7 +295,6 @@ class Qiskit_Aer_QAOA(Solver):
             level: Number of QAOA layers.
             seed: Optional random seed for compilation, optimization, and sampling.
             sample_shots: Number of final measurement shots.
-            estimator_shot: Shots per optimization expectation estimate.
             num_restart: Number of random-start optimization runs.
         """
         quso_problem = problem.to_quso()
