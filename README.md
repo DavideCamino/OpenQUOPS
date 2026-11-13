@@ -30,8 +30,9 @@ python -m pip install -e '.[all,dev]'
 ```
 
 Optional dependencies may impose a higher minimum Python version. The QAOA
-solver uses Qiskit Aer V2 primitives directly: exact statevector expectation
-values for optimization and shot-based sampling for final assignments. The
+solver uses Qiskit Aer V2 primitives directly: statevector simulation by
+default, with configurable simulation methods and shot-based sampling for final
+assignments. The
 QAOA extra currently also installs IBM Runtime, but the solver does not use it.
 
 ## Example
@@ -56,8 +57,23 @@ Optional solver imports (after installing their extras):
 
 ```python
 from oquops.solvers.annealing.annealing_ocean import AnnealOcean
-from oquops.solvers.variational.qaoa_qiskit_aer import Qiskit_Aer_QAOA
+from oquops.solvers.variational.qaoa_qiskit_aer import AerMethod, Qiskit_Aer_QAOA
 ```
+
+Select the QAOA simulation method using the `AerMethod` enum:
+
+```python
+result = Qiskit_Aer_QAOA().solve(
+    problem,
+    method=AerMethod.MATRIX_PRODUCT_STATE,
+    seed=42,
+)
+```
+
+The default is `AerMethod.STATEVECTOR`. Other choices are `AUTOMATIC`,
+`DENSITY_MATRIX`, and `MATRIX_PRODUCT_STATE`. The selected method is used for
+transpilation, expectation estimation, and final sampling. Pass an enum member,
+not a raw string.
 
 ## Implementation
 

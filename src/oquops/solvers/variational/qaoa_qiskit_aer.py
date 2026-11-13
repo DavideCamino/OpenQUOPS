@@ -20,6 +20,14 @@ from qiskit_aer.primitives import SamplerV2 as Sampler
 import time
 import pandas as pd
 
+from enum import Enum
+
+class AerMethod(str, Enum):
+    AUTOMATIC = "automatic"
+    STATEVECTOR = "statevector"
+    DENSITY_MATRIX = "density_matrix"
+    MATRIX_PRODUCT_STATE = "matrix_product_state"
+
 class Qiskit_Aer_QAOA(Solver):
     """Optimize and sample QAOA circuits using Qiskit Aer and SciPy COBYLA."""
 
@@ -102,8 +110,9 @@ class Qiskit_Aer_QAOA(Solver):
             float,
         ],
         seed: int | None = None,
+        method: AerMethod = AerMethod.STATEVECTOR
     ) -> OptimizeResult:
-        """Optimize using exact statevector expectations from Aer EstimatorV2.
+        """Optimize using Aer EstimatorV2 with the selected simulation method.
 
         Args:
             init_params: Initial circuit parameter values.
@@ -119,7 +128,7 @@ class Qiskit_Aer_QAOA(Solver):
             options={
                 "default_precision": 0.0,
                 "backend_options": {
-                    "method": "statevector",
+                    "method": method.value,
                 },
                 "run_options": {
                     "seed_simulator": seed,
@@ -159,6 +168,7 @@ class Qiskit_Aer_QAOA(Solver):
         cost_func_estimator: Callable,
         num_restarts: int = 10,
         seed: int | None = None,
+        method: AerMethod = AerMethod.STATEVECTOR
     ) -> OptimizeResult:
 
         """Optimize random starts and return the lowest-cost result.
@@ -183,6 +193,7 @@ class Qiskit_Aer_QAOA(Solver):
                 cost_hamiltonian,
                 cost_func_estimator,
                 seed=optimization_seed,
+                method=method
             )
 
             if best_result is None or result.fun < best_result.fun:
@@ -195,6 +206,7 @@ class Qiskit_Aer_QAOA(Solver):
         optimized_circuit: Any,
         shots: int,
         seed: int | None = None,
+        method: AerMethod = AerMethod.STATEVECTOR
     ) -> dict[int, int]:
         """Sample the measured circuit using Aer SamplerV2.
 
@@ -211,7 +223,7 @@ class Qiskit_Aer_QAOA(Solver):
             seed=seed,
             options={
                 "backend_options": {
-                    "method": "statevector",
+                    "method": method.value,
                 },
             },
         )
@@ -286,7 +298,8 @@ class Qiskit_Aer_QAOA(Solver):
             level: int = 2, 
             seed: int | None = None, 
             sample_shots: int = 4096, 
-            num_restart: int = 10
+            num_restart: int = 10,
+            method: AerMethod = AerMethod.STATEVECTOR
             ) -> SolverResult:
         """Optimize a QAOA circuit and sample candidate assignments.
 
@@ -300,7 +313,7 @@ class Qiskit_Aer_QAOA(Solver):
         quso_problem = problem.to_quso()
         start = time.time()
 
-        backend = qiskit_aer.AerSimulator(seed_simulator=seed)
+        backend = qiskit_aer.AerSimulator(seed_simulator=seed, method=method.value)
 
         hamiltonian = self.build_cost_hamiltonian(quso_problem)
         circuit = self.build_circuit(hamiltonian, reps=level)
@@ -311,6 +324,7 @@ class Qiskit_Aer_QAOA(Solver):
             self.cost_func_estimator,
             seed=seed,
             num_restarts=num_restart,
+            method=method
         )
         optimized_circuit = transpiled_circuit.assign_parameters(best_params.x)
         optimized_circuit.measure_all()
@@ -318,6 +332,7 @@ class Qiskit_Aer_QAOA(Solver):
             optimized_circuit,
             seed=seed,
             shots=sample_shots,
+            method=method
         )
 
         stop = time.time()

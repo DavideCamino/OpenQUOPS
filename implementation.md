@@ -135,21 +135,24 @@ work from their reported execution time.
    measurement probabilities.
 2. **Construct and compile:** `build_circuit()` creates a `QAOAAnsatz` with
    `reps=level`. The default is two layers. `transpile()` compiles it for the
-   Aer backend with optimization level 3; this compilation setting is separate
-   from the number of QAOA layers.
+   Aer backend configured with the selected `method`, with optimization level 3;
+   this compilation setting is separate from the number of QAOA layers.
 3. **Estimate the objective:** `cost_func_estimator()` applies the transpiled
    circuit's qubit layout to the Hamiltonian and uses Qiskit Aer `EstimatorV2`
    to obtain its expectation value.
-4. **Optimize parameters:** `optimization()` configures the estimator for
-   statevector simulation with `default_precision=0.0`, providing exact
-   expectation values without sampling noise or an estimator shot count. It
+4. **Optimize parameters:** `optimization()` configures the estimator with the
+   selected simulation method (statevector by default) and
+   `default_precision=0.0`, adding no sampling noise to expectation values and
+   requiring no estimator shot count. Numerical accuracy still depends on the
+   selected method and its simulator settings. It
    calls SciPy's derivative-free COBYLA optimizer with tolerance `1e-5`.
    `generate_initial_params()` draws angles uniformly from `[0, 2*pi)`, and
    `repeated_optimization()` keeps the lowest-cost result across random starts.
    Multiple starts reduce dependence on one initialization, but do not establish
    global optimality.
 5. **Measure:** Bind the selected parameters, add measurements, and use a
-   Qiskit Aer `SamplerV2` to obtain integer outcome counts.
+   Qiskit Aer `SamplerV2` with the same simulation method to obtain integer
+   outcome counts.
 6. **Format results:** `to_bin()` reverses the bit representation to put qubit
    zero first. `to_spin()` additionally applies `s = 1 - 2*x`.
    `to_dataframe()` chooses binary or spin values according to the original
@@ -163,6 +166,22 @@ work from their reported execution time.
 | `seed` | Seeds compilation, initial parameters, and simulator runs | `None` |
 | `sample_shots` | Final measurement count | `4096` |
 | `num_restart` | Number of independent optimization runs | `10` |
+| `method` | Aer simulation method, supplied as an `AerMethod` member | `AerMethod.STATEVECTOR` |
+
+`AerMethod` is defined in the QAOA solver module and offers:
+
+| Enum member | Aer method value |
+| --- | --- |
+| `AUTOMATIC` | `"automatic"` |
+| `STATEVECTOR` | `"statevector"` |
+| `DENSITY_MATRIX` | `"density_matrix"` |
+| `MATRIX_PRODUCT_STATE` | `"matrix_product_state"` |
+
+`solve()` passes the selected method through `repeated_optimization()` to
+`optimization()`, and separately to `sample()`. Each Aer component receives
+`method.value`; callers should supply an enum member rather than a raw string.
+`AUTOMATIC` delegates method selection to Aer. This option controls quantum
+simulation only; the classical optimizer remains COBYLA.
 
 The timer starts after QUSO conversion and covers backend setup through final
 sampling, excluding output formatting. The optimizer's parameters and cost are
