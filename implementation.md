@@ -30,8 +30,13 @@ $$
 - **Implementation decision:** Conversion is delegated to qubovert.
   `to_qubovert_qubo()` and `to_qubovert_quso()` build backend models, including
   the constant offset. `to_qubo()` and `to_quso()` reconstruct a new
-  `QuadraticProblem` from the converted coefficients, retaining the symbol tuple.
-  The binary/spin relation is `s = 1 - 2*x`.
+  `QuadraticProblem` from the converted coefficients, reconstructing variable
+  names as a list in the backend mapping order. The binary/spin relation is
+  `s = 1 - 2*x`.
+- **Import from qubovert:** `from_qubovert_qubo()` and `from_qubovert_quso()`
+  construct problems from backend models, recovering the coefficient matrix,
+  variable names, and constant offset. These factories are intended for
+  quadratic models.
 
 The constructor currently stores inputs without validating dimensions, variable
 names, or assignment values; callers must provide consistent data.
@@ -65,7 +70,8 @@ $$
   itself does not calculate energies, sort solutions, or validate the data.
 
 `problem_type` is annotated on the class but is not initialized by the
-constructor. Current solvers leave `metadata` empty and exclude result-formatting
+constructor. Annealing records the sampler's type in `metadata['sampler']`;
+the other solvers leave metadata empty. All solvers exclude result-formatting
 work from their reported execution time.
 
 ## Brute force
@@ -132,16 +138,18 @@ work from their reported execution time.
    Aer backend with optimization level 3; this compilation setting is separate
    from the number of QAOA layers.
 3. **Estimate the objective:** `cost_func_estimator()` applies the transpiled
-   circuit's qubit layout to the Hamiltonian and uses an IBM Runtime
-   `Estimator` to obtain its expectation value.
-4. **Optimize parameters:** `optimization()` opens a backend session and calls
-   SciPy's derivative-free COBYLA optimizer with tolerance `1e-5`.
+   circuit's qubit layout to the Hamiltonian and uses Qiskit Aer `EstimatorV2`
+   to obtain its expectation value.
+4. **Optimize parameters:** `optimization()` configures the estimator for
+   statevector simulation with `default_precision=0.0`, providing exact
+   expectation values without sampling noise or an estimator shot count. It
+   calls SciPy's derivative-free COBYLA optimizer with tolerance `1e-5`.
    `generate_initial_params()` draws angles uniformly from `[0, 2*pi)`, and
    `repeated_optimization()` keeps the lowest-cost result across random starts.
    Multiple starts reduce dependence on one initialization, but do not establish
    global optimality.
 5. **Measure:** Bind the selected parameters, add measurements, and use a
-   Runtime `Sampler` to obtain integer outcome counts.
+   Qiskit Aer `SamplerV2` to obtain integer outcome counts.
 6. **Format results:** `to_bin()` reverses the bit representation to put qubit
    zero first. `to_spin()` additionally applies `s = 1 - 2*x`.
    `to_dataframe()` chooses binary or spin values according to the original
@@ -154,7 +162,6 @@ work from their reported execution time.
 | `level` | Number of QAOA layers | `2` |
 | `seed` | Seeds compilation, initial parameters, and simulator runs | `None` |
 | `sample_shots` | Final measurement count | `4096` |
-| `estimator_shot` | Shots per expectation estimate | `2048` |
 | `num_restart` | Number of independent optimization runs | `10` |
 
 The timer starts after QUSO conversion and covers backend setup through final
@@ -162,11 +169,11 @@ sampling, excluding output formatting. The optimizer's parameters and cost are
 not currently retained in result metadata.
 
 **Current limitations:** `num_restart` must be positive because the solver
-requires a best optimization result. Also, `to_dataframe()` currently combines
-`problem.symbols` with a list using `+`; this fails for the documented tuple
-symbol type and needs a tuple/list normalization before QAOA result formatting
-can work with that type. Runtime primitives are version-sensitive, which is why
-the installation configuration constrains the supported Runtime minor version.
+requires a best optimization result. Solver options and optimization outcomes
+are not validated. `to_dataframe()` normalizes variable names to a list, so both
+tuple and list symbols are supported. The solver uses Aer primitives directly;
+although the QAOA installation extra still includes IBM Runtime, it is not used
+by the current implementation.
 
 ## TO DO
 
@@ -180,9 +187,9 @@ the installation configuration constrains the supported Runtime minor version.
 - [ ] **Problem persistence:** Add load/save methods using a documented,
   versioned format (for example, JSON), preserving coefficients, symbol order,
   problem type, and offset. Validate loaded data through the same input checks.
-- [ ] **Import from qubovert:** Add factory methods for qubovert QUBO and QUSO
-  models, preserving labels, variable ordering, and offsets. Explicitly handle
-  unsupported labels or higher-order terms rather than silently losing data.
+- [ ] **Validate qubovert imports:** The QUBO and QUSO factory methods already
+  exist. Add explicit validation of supported labels and quadratic terms, and
+  tests covering variable ordering and offsets.
 
 ### Ideas on future extension not planned already
 

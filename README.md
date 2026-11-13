@@ -30,8 +30,9 @@ python -m pip install -e '.[all,dev]'
 ```
 
 Optional dependencies may impose a higher minimum Python version. The QAOA
-extra constrains Aer and IBM Runtime to their current minor versions because
-the solver uses version-sensitive Runtime APIs.
+solver uses Qiskit Aer V2 primitives directly: exact statevector expectation
+values for optimization and shot-based sampling for final assignments. The
+QAOA extra currently also installs IBM Runtime, but the solver does not use it.
 
 ## Example
 
